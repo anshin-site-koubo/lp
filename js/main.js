@@ -1,18 +1,57 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // スクロール時のヘッダーの変化
+  const header = document.querySelector(".header");
+  let lastScroll = 0;
+
+  window.addEventListener("scroll", () => {
+    const currentScroll = window.pageYOffset;
+
+    if (currentScroll > 50) {
+      header.classList.add("scrolled");
+    } else {
+      header.classList.remove("scrolled");
+    }
+
+    lastScroll = currentScroll;
+  });
+
   // モバイルメニューの制御
   const mobileMenuToggle = document.querySelector(".mobile-menu-toggle");
   const navLinks = document.querySelector(".nav-links");
 
   if (mobileMenuToggle && navLinks) {
     mobileMenuToggle.addEventListener("click", () => {
+      mobileMenuToggle.classList.toggle("active");
       navLinks.classList.toggle("active");
+
+      // メニューが開いているときはスクロールを無効化
+      if (navLinks.classList.contains("active")) {
+        document.body.style.overflow = "hidden";
+      } else {
+        document.body.style.overflow = "";
+      }
     });
 
     // メニューリンクをクリックしたらメニューを閉じる
     navLinks.querySelectorAll("a").forEach((link) => {
       link.addEventListener("click", () => {
+        mobileMenuToggle.classList.remove("active");
         navLinks.classList.remove("active");
+        document.body.style.overflow = "";
       });
+    });
+
+    // メニュー外をクリックしたら閉じる
+    document.addEventListener("click", (e) => {
+      if (
+        navLinks.classList.contains("active") &&
+        !navLinks.contains(e.target) &&
+        !mobileMenuToggle.contains(e.target)
+      ) {
+        mobileMenuToggle.classList.remove("active");
+        navLinks.classList.remove("active");
+        document.body.style.overflow = "";
+      }
     });
   }
 
@@ -72,33 +111,70 @@ document.addEventListener("DOMContentLoaded", () => {
   // スクロールアニメーション
   const observerOptions = {
     threshold: 0.1,
+    rootMargin: "0px 0px -50px 0px",
   };
 
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (entry.isIntersecting) {
         entry.target.classList.add("visible");
+        // アニメーション後に監視を解除
+        observer.unobserve(entry.target);
       }
     });
   }, observerOptions);
 
   // アニメーション対象の要素を監視
   document
-    .querySelectorAll(".service-card, .feature, .security-item")
-    .forEach((el) => {
+    .querySelectorAll(".service-card, .feature, .security-item, .hero-content")
+    .forEach((el, index) => {
       el.style.opacity = "0";
       el.style.transform = "translateY(20px)";
-      el.style.transition = "opacity 0.6s ease, transform 0.6s ease";
+      el.style.transition = `opacity 0.6s ease, transform 0.6s ease ${
+        index * 0.1
+      }s`;
       observer.observe(el);
     });
 
   // CSSクラスを追加
   const style = document.createElement("style");
   style.textContent = `
-        .visible {
-            opacity: 1 !important;
-            transform: translateY(0) !important;
-        }
-    `;
+    .visible {
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+    }
+  `;
   document.head.appendChild(style);
+
+  // パーティクルエフェクト
+  const createParticle = () => {
+    const particle = document.createElement("div");
+    particle.className = "particle";
+    document.body.appendChild(particle);
+
+    const size = Math.random() * 3 + 1;
+    const destinationX = (Math.random() - 0.5) * 200;
+    const destinationY = (Math.random() - 0.5) * 200;
+
+    particle.style.width = `${size}px`;
+    particle.style.height = `${size}px`;
+    particle.style.left = `${Math.random() * 100}vw`;
+    particle.style.top = `${Math.random() * 100}vh`;
+    particle.style.background = `rgba(66, 153, 225, ${Math.random() * 0.5})`;
+    particle.style.borderRadius = "50%";
+    particle.style.position = "fixed";
+    particle.style.pointerEvents = "none";
+    particle.style.zIndex = "0";
+    particle.style.animation = `float ${
+      Math.random() * 3 + 2
+    }s ease-in-out infinite`;
+    particle.style.transform = `translate(${destinationX}px, ${destinationY}px)`;
+
+    setTimeout(() => {
+      particle.remove();
+    }, 5000);
+  };
+
+  // パーティクルを定期的に生成
+  setInterval(createParticle, 300);
 });
